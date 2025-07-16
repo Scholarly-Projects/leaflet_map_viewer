@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Taylor &amp; Frank Church Wilderness Map</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Leaflet CSS -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css"
+  />
+
+  <style>
+    html, body, #map {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
+  <script>
+    // 1. Initialize map
+    var map = L.map('map').setView([45.05, -114.95], 9);
+
+    // 2. Base layer: Stamen Toner (B&W, detailed)
+    var stamenToner = L.tileLayer(
+      'https://stamen-tiles.a.ssl.fastly.net/toner/{z}/{x}/{y}.png',
+      {
+        attribution:
+          'Map tiles by <a href="http://stamen.com">Stamen Design</a>, ' +
+          'Data © <a href="http://openstreetmap.org">OpenStreetMap</a>',
+        maxZoom: 20,
+      }
+    ).addTo(map);
+
+    // 3. Trail overlays
+    var hikingTrails = L.tileLayer(
+      'https://tile.waymarkedtrails.org/hiking/{z}/{x}/{y}.png',
+      {
+        attribution:
+          '&copy; <a href="https://waymarkedtrails.org">Waymarked Trails</a>',
+        maxZoom: 18,
+      }
+    ).addTo(map);
+
+    var cyclingTrails = L.tileLayer(
+      'https://tile.waymarkedtrails.org/cycling/{z}/{x}/{y}.png',
+      {
+        attribution:
+          '&copy; <a href="https://waymarkedtrails.org">Waymarked Trails</a>',
+        maxZoom: 18,
+      }
+    ).addTo(map);
+
+    var skiingTrails = L.tileLayer(
+      'https://tile.waymarkedtrails.org/skiing/{z}/{x}/{y}.png',
+      {
+        attribution:
+          '&copy; <a href="https://waymarkedtrails.org">Waymarked Trails</a>',
+        maxZoom: 18,
+      }
+    ).addTo(map);
+
+    // 4. Topographic overlay
+    var openTopo = L.tileLayer(
+      'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+      {
+        attribution:
+          'Map data © <a href="https://opentopomap.org">OpenTopoMap</a>',
+        maxZoom: 17,
+      }
+    ).addTo(map);
+
+    // 5. GeoNames layer group (empty for now)
+    var geoNamesLayer = L.layerGroup();
+
+    // 6. Layer controls
+    var baseMaps = {
+      'Stamen Toner': stamenToner,
+    };
+    var overlayMaps = {
+      'Hiking Trails': hikingTrails,
+      'Cycling Trails': cyclingTrails,
+      'Skiing Trails': skiingTrails,
+      'OpenTopoMap Overlay': openTopo,
+      'GeoNames Places': geoNamesLayer,
+    };
+    L.control.layers(baseMaps, overlayMaps, { collapsed: false }).addTo(map);
+
+    // 7. Add search box (Nominatim)
+    L.Control.geocoder({ defaultMarkGeocode: true }).addTo(map);
+
+    // 8. JSONP callback to receive GeoNames results
+    function handleGeoNames(data) {
+      data.geonames.forEach(function (place) {
+        L.marker([place.lat, place.lng])
+          .bindPopup(
+            '<strong>' +
+              place.name +
+              '</strong><br>' +
+              place.countryName +
+              (place.fcodeName ? '<br>' + place.fcodeName : '')
+          )
+          .addTo(geoNamesLayer);
+      });
+      // If you want GeoNames visible on load, uncomment:
+      // geoNamesLayer.addTo(map);
+    }
+
+    // 9. Inject JSONP <script> tag (bypasses CORS)
+    var script = document.createElement('script');
+    script.src =
+      'http://api.geonames.org/searchJSON?' +
+      'q=Taylor+Ranch&maxRows=10&username=aweymo&callback=handleGeoNames';
+    document.body.appendChild(script);
+  </script>
+</body>
+</html>
